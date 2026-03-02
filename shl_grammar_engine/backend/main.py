@@ -1,11 +1,12 @@
 import logging
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from .analyzer import CommunicationAnalyzer
 from .asr import SpeechRecognition
+from .dependencies import get_analyzer, get_grammar_scorer, get_speech_recognizer
 from .grammar import GrammarScorer
 
 logging.basicConfig(
@@ -14,11 +15,7 @@ logging.basicConfig(
 )
 LOGGER = logging.getLogger("shl_grammar_engine")
 
-app = FastAPI(title="SHL Grammar Engine", version="1.0.0")
-
-speech_recognizer = SpeechRecognition()
-grammar_scorer = GrammarScorer()
-analyzer = CommunicationAnalyzer(speech_recognizer, grammar_scorer)
+app = FastAPI(title="SHL Grammar Engine", version="1.1.0")
 
 
 class ScoreRequest(BaseModel):
@@ -31,7 +28,10 @@ def health() -> dict:
 
 
 @app.post("/transcribe")
-async def transcribe(audio: UploadFile = File(...)) -> dict:
+async def transcribe(
+    audio: UploadFile = File(...),
+    speech_recognizer: SpeechRecognition = Depends(get_speech_recognizer),
+) -> dict:
     try:
         content = await audio.read()
         result = speech_recognizer.transcribe_bytes(content)
@@ -47,7 +47,10 @@ async def transcribe(audio: UploadFile = File(...)) -> dict:
 
 
 @app.post("/score")
-def score(request: ScoreRequest) -> dict:
+def score(
+    request: ScoreRequest,
+    grammar_scorer: GrammarScorer = Depends(get_grammar_scorer),
+) -> dict:
     try:
         result = grammar_scorer.score_text(request.text)
         return {
@@ -61,7 +64,11 @@ def score(request: ScoreRequest) -> dict:
 
 
 @app.post("/analyze")
-async def analyze(audio: Optional[UploadFile] = File(default=None), text: Optional[str] = Form(default=None)) -> dict:
+async def analyze(
+    audio: Optional[UploadFile] = File(default=None),
+    text: Optional[str] = Form(default=None),
+    analyzer: CommunicationAnalyzer = Depends(get_analyzer),
+) -> dict:
     try:
         if audio is not None:
             content = await audio.read()

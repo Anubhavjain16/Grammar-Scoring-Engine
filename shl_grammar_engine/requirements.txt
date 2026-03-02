@@ -12,3 +12,4 @@ pandas==2.2.3
 datasets==3.2.0
 jiwer==3.0.5
 soundfile==0.12.1
+pytest==8.3.4

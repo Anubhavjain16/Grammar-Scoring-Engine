@@ -71,11 +71,12 @@ if analyze_btn:
             wav_bytes = pcm_to_wav_bytes(audio)
             files = {"audio": ("speech.wav", wav_bytes, "audio/wav")}
 
-            with st.spinner("Analyzing speech..."):
-                response = requests.post(f"{BACKEND_URL}/analyze", files=files, timeout=120)
-
-            if response.status_code != 200:
-                st.error(f"Backend error: {response.text}")
+            try:
+                with st.spinner("Analyzing speech..."):
+                    response = requests.post(f"{BACKEND_URL}/analyze", files=files, timeout=120)
+                response.raise_for_status()
+            except requests.RequestException as exc:
+                st.error(f"Backend connection/error: {exc}")
             else:
                 payload = response.json()
                 transcript_box.text_area("Transcript", payload.get("transcript", ""), height=220)

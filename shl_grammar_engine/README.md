@@ -7,7 +7,7 @@ Production-grade spoken English communication assessment app inspired by SHL / V
 - Real-time ASR with **faster-whisper** (`large-v3`).
 - Grammar scoring with **`textattack/bert-base-uncased-CoLA`** transformer.
 - Live results: transcript, grammar score (0–5), confidence.
-- FastAPI backend endpoints:
+- FastAPI backend endpoints (model singletons are lazy-loaded via FastAPI dependencies):
   - `POST /transcribe`
   - `POST /score`
   - `POST /analyze`
@@ -51,6 +51,11 @@ BACKEND_URL=http://localhost:8000 streamlit run frontend/app.py --server.port 85
 ```
 
 Open `http://localhost:8501`.
+
+### Run Tests
+```bash
+pytest -q
+```
 
 ## API Examples
 ### Transcribe audio
